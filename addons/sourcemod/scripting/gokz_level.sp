@@ -5,7 +5,7 @@
 #include <SteamWorks>
 #include <smjansson>
 #include <colorlib>
-#include "gokz/core"
+#include <gokz/core>
 
 public Plugin myinfo =
 {
