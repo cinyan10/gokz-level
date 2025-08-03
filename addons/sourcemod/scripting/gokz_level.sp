@@ -41,7 +41,7 @@ public void OnPluginStart()
     {
         if (IsClientAuthorized(i) && !IsFakeClient(i))
         {
-            OnClientAuthorized(i, NULL_STRING);
+            OnClientPutInServer(i);
         }
     }
 }
@@ -58,7 +58,7 @@ public void OnMapStart()
     SDKHook(GetPlayerResourceEntity(), SDKHook_ThinkPost, Hook_OnThinkPost);
 }
 
-public void OnClientConnected(int client)
+public void OnClientPutInServer(int client)
 {
     int userID = GetClientUserId(client);
     if (g_Players[client].iUserID != userID)
@@ -68,10 +68,7 @@ public void OnClientConnected(int client)
         g_Players[client].fSkillScore = 0.0;
         g_Players[client].bLoad = false;
     }
-}
 
-public void OnClientAuthorized(int client, const char[] auth)
-{
     if (g_Players[client].bLoad || IsFakeClient(client))
         return;
 
@@ -114,7 +111,7 @@ public void GOKZ_OnOptionChanged(int client, const char[] option, any newValue)
             SetEntData(ent, m_nPersonaDataPublicLevel + client * 4, 0, 4, true);
         }
 
-        OnClientAuthorized(client, NULL_STRING);
+        OnClientPutInServer(client);
     }
 }
 
@@ -124,9 +121,6 @@ void HTTPRequestComplete(Handle hRequest, bool bFailure, bool bSuccess, EHTTPSta
     int userID = contextVal % 10000;
     // int reqMode = contextVal / 10000;
     int client = GetClientOfUserId(userID);
-
-    LogMessage(" HTTP Complete: UserID: %d, Client: %d, Failure: %b, Success: %b, Status: %d",
-                  userID, client, bFailure, bSuccess, eStatusCode);
 
     if (client && (eStatusCode == k_EHTTPStatusCode200OK || eStatusCode == k_EHTTPStatusCode404NotFound))
     {
@@ -163,9 +157,6 @@ void HTTPResponseData(const char[] body, any ctx)
             g_Players[client].iSkillLevel = 10;
         else if (g_Players[client].iSkillLevel < 1)
             g_Players[client].iSkillLevel = 0;
-		
-        LogMessage("[KZSkillLevel] [%N] Parsed pts_skill: %.2f, Level: %d",
-            client, pts, g_Players[client].iSkillLevel);
  
         g_Players[client].bLoad = true;
         CloseHandle(hJson);
@@ -194,7 +185,7 @@ void Hook_OnThinkPost(int ent)
 
         if (!g_Players[i].bLoad && (now - g_LastRetryTime[i]) >= RETRY_INTERVAL)
         {
-            OnClientAuthorized(i, NULL_STRING);
+            OnClientPutInServer(i);
         }
     }
 }
@@ -215,7 +206,7 @@ public Action Command_ShowRating(int client, int args)
     else
     {
         CPrintToChat(client, "{gold}GOKZ.TOP {grey}| {default}Your skill level data is not loaded yet, retrying...");
-        OnClientAuthorized(client, NULL_STRING);
+        OnClientPutInServer(client);
     }
 
     return Plugin_Handled;
