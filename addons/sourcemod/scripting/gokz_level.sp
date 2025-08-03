@@ -79,13 +79,11 @@ public void OnClientAuthorized(int client, const char[] auth)
     if (mode < 0 || mode > 2)
         mode = 2;
 
-    char steamID[32], encodedID[64];
+    char steamID[64];
     GetClientAuthId(client, AuthId_SteamID64, steamID, sizeof(steamID));
-    strcopy(encodedID, sizeof(encodedID), steamID);
-    ReplaceString(encodedID, sizeof(encodedID), ":", "%3A", true);
 
     char url[256];
-    Format(url, sizeof(url), "https://api.gokz.top/leaderboard/%s", encodedID);
+    Format(url, sizeof(url), "https://api.gokz.top/leaderboard/%s", steamID);
     Handle hRequest = SteamWorks_CreateHTTPRequest(k_EHTTPMethodGET, url);
     if (hRequest == INVALID_HANDLE)
         return;
@@ -95,6 +93,8 @@ public void OnClientAuthorized(int client, const char[] auth)
     SteamWorks_SetHTTPRequestContextValue(hRequest, GetClientUserId(client) + mode * 10000);
     SteamWorks_SetHTTPCallbacks(hRequest, HTTPRequestComplete);
     SteamWorks_SendHTTPRequest(hRequest);
+
+    LogMessage("[KZSkillLevel] [%N] Sent HTTP request to %s", client, url);
 
     g_LastRetryTime[client] = GetTime();
 }
@@ -124,6 +124,9 @@ void HTTPRequestComplete(Handle hRequest, bool bFailure, bool bSuccess, EHTTPSta
     int userID = contextVal % 10000;
     // int reqMode = contextVal / 10000;
     int client = GetClientOfUserId(userID);
+
+    LogMessage(" HTTP Complete: UserID: %d, Client: %d, Failure: %b, Success: %b, Status: %d",
+                  userID, client, bFailure, bSuccess, eStatusCode);
 
     if (client && (eStatusCode == k_EHTTPStatusCode200OK || eStatusCode == k_EHTTPStatusCode404NotFound))
     {
@@ -161,6 +164,9 @@ void HTTPResponseData(const char[] body, any ctx)
         else if (g_Players[client].iSkillLevel < 1)
             g_Players[client].iSkillLevel = 0;
 		
+        LogMessage("[KZSkillLevel] [%N] Parsed pts_skill: %.2f, Level: %d",
+            client, pts, g_Players[client].iSkillLevel);
+ 
         g_Players[client].bLoad = true;
         CloseHandle(hJson);
     }
@@ -198,6 +204,8 @@ public Action Command_ShowRating(int client, int args)
 {
     if (!IsClientInGame(client) || IsFakeClient(client))
         return Plugin_Handled;
+
+    LogMessage("[KZSkillLevel] [%N] ran !rating - Loaded: %b", client, g_Players[client].bLoad);
 
     if (g_Players[client].bLoad)
     {
