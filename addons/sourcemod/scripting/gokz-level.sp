@@ -4,7 +4,6 @@
 #include <sdkhooks>
 #include <SteamWorks>
 #include <smjansson>
-#include <colorlib>
 #include <gokz/core>
 
 public Plugin myinfo =
@@ -90,8 +89,6 @@ public void OnClientPutInServer(int client)
     SteamWorks_SetHTTPRequestContextValue(hRequest, GetClientUserId(client) + mode * 10000);
     SteamWorks_SetHTTPCallbacks(hRequest, HTTPRequestComplete);
     SteamWorks_SendHTTPRequest(hRequest);
-
-    LogMessage("[KZSkillLevel] [%N] Sent HTTP request to %s", client, url);
 
     g_LastRetryTime[client] = GetTime();
 }
@@ -196,16 +193,14 @@ public Action Command_ShowRating(int client, int args)
     if (!IsClientInGame(client) || IsFakeClient(client))
         return Plugin_Handled;
 
-    LogMessage("[KZSkillLevel] [%N] ran !rating - Loaded: %b", client, g_Players[client].bLoad);
-
     if (g_Players[client].bLoad)
     {
-        CPrintToChat(client, "{gold}GOKZ.TOP {grey}| {default}Your Rating: {green}%.2f{default} {grey}| Level {green} %d",
+        GOKZ_PrintToChat(client, false, "{gold}GOKZ.TOP {grey}| {default}Your Rating: {green}%.2f{default} {grey}| Level {green} %d",
             g_Players[client].fSkillScore, g_Players[client].iSkillLevel);
     }
     else
     {
-        CPrintToChat(client, "{gold}GOKZ.TOP {grey}| {default}Your skill level data is not loaded yet, retrying...");
+        GOKZ_PrintToChat(client, false, "{gold}GOKZ.TOP {grey}| {default}Your skill level data is not loaded yet, retrying...");
         OnClientPutInServer(client);
     }
 
