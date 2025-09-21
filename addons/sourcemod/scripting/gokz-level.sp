@@ -1,10 +1,11 @@
-#pragma semicolon 1
-#pragma newdecls required
 #include <sdktools>
 #include <sdkhooks>
 #include <SteamWorks>
 #include <smjansson>
 #include <gokz/core>
+
+#pragma semicolon 1
+#pragma newdecls required
 
 public Plugin myinfo =
 {
